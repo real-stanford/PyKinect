@@ -5,6 +5,7 @@ from io import BytesIO
 import imageio
 import numpy as np
 from aiohttp import web
+import asyncio
 
 import pyk4a
 from pyk4a import Config, PyK4A
@@ -22,6 +23,30 @@ k4a.start()
 # set exposure parameters
 k4a.exposure_mode_auto = False
 k4a.exposure = 8330
+
+async def exposure_handle(request):
+    """
+    To set manual exposure, use format
+    <host>:<port>/exposure?shutter_us=8330
+    To use auto exposure, use format
+    <host>:<port>/exposure
+    """
+
+    try:
+        auto = 'shutter_us' not in request.query
+        exposure = int(request.query.get('shutter_us', '8330'))
+        k4a.exposure_mode_auto = auto
+        if auto:
+            await asyncio.sleep(0.5)
+            exposure = k4a.exposure
+        else:
+            k4a.exposure = exposure
+
+        text = f'Success! Auto exposure {auto}, shutter_us {exposure}'
+        return web.Response(body=text)
+    except:
+        text = 'Incorrect format! use format <host>:<port>/exposure?shutter_us=8330'
+        return web.Response(body=text)
 
 async def view_handle(request):
     img_buf = BytesIO()
@@ -64,7 +89,9 @@ app = web.Application()
 app.add_routes([web.get('/', view_handle),
                 web.get('/view', view_handle),
                 web.get('/intr', intr_handle),
-                web.get('/pickle', pickle_handle)])
+                web.get('/pickle', pickle_handle),
+                web.get('/exposure', exposure_handle)
+                ])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Kinect Server")
