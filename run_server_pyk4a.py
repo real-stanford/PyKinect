@@ -25,15 +25,8 @@ k4a.exposure_mode_auto = False
 k4a.exposure = 8330
 
 async def exposure_handle(request):
-    """
-    To set manual exposure, use format
-    <host>:<port>/exposure?shutter_us=8330
-    To use auto exposure, use format
-    <host>:<port>/exposure
-    """
-
     try:
-        auto = 'shutter_us' not in request.query
+        auto = (request.query['auto'] == 'True')
         exposure = int(request.query.get('shutter_us', '8330'))
         k4a.exposure_mode_auto = auto
         if auto:
@@ -42,10 +35,10 @@ async def exposure_handle(request):
         else:
             k4a.exposure = exposure
 
-        text = f'Success! Auto exposure {auto}, shutter_us {exposure}'
+        text = f'Success! Auto exposure {auto}, shutt_us {exposure}'
         return web.Response(body=text)
     except:
-        text = 'Incorrect format! use format <host>:<port>/exposure?shutter_us=8330'
+        text = 'Incorrect format! use format <host>:<port>/exposure?auto=False&shutter_us=8330'
         return web.Response(body=text)
 
 async def view_handle(request):
