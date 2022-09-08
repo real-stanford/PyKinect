@@ -44,7 +44,7 @@ async def pickle_handle(request):
     img_buf = BytesIO()
     capture = k4a.get_capture()
     color_img = capture.color
-    depth_img = capture.transformed_depth
+    depth_img = capture.transformed_depth.astype(np.float32) / 1000.0
     color_img = color_img[...,[2,1,0]]
 
     enc = pickle.dumps({
